@@ -5,14 +5,14 @@ from rich.markdown import Markdown
 from rich.spinner import Spinner
 from conduit.chatml_templates import chat_prompt
 from conduit.commands.path import CONFIG_DIR
+from conduit.memory.short_term import MemoryManager
 import os
 
 
 console = Console()
 
 file = os.path.join(CONFIG_DIR, "system.prompt")
-
-
+memory = MemoryManager()
 
 
 def run(args):
@@ -21,7 +21,7 @@ def run(args):
         return
 
     model = args[0]  
-    
+
     if os.path.exists(file) and os.path.getsize(file) != 0:
         system = open(file, "r").read()
     else:
@@ -32,22 +32,23 @@ def run(args):
         
         You are helpful to the user. 
         """
-           
+
     engine = Engine(model)
 
     try:
         while True:
 
             inp = console.input("[bold cyan]>>> [/bold cyan]")
-            prompt = inp
 
             response = ""
             spinner = Spinner("dots", text="Thinking...")
 
             with Live(spinner, console=console, refresh_per_second=20) as live:
                 first_token = True
+                
+                memory.add("user", inp)
+                prompt = chat_prompt(system=system, user=inp)
 
-                prompt = chat_prompt(system=system, user=prompt)
                 try:
                     for token in engine.generate(prompt):
 
@@ -60,6 +61,9 @@ def run(args):
 
                 except KeyboardInterrupt:
                     continue
-
+            memory.add("assistant", response)
     except KeyboardInterrupt:
         console.print("\n[yellow]bye.[/yellow]")
+    except EOFError:
+        print("Input closed.")
+        return

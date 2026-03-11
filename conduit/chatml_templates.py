@@ -1,23 +1,21 @@
 from jinja2 import Template
+from conduit.memory.short_term import MemoryManager
 
-CHATML_CHAT_TEMPLATE = """{% for message in messages %}{{ '<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>\n' }}{% endfor %}{% if add_generation_prompt %}{{ '<|im_start|>assistant\n' }}{% endif %}"""
+memory = MemoryManager()
+
+CHATML_CHAT_TEMPLATE = """{% for message in messages %}{{ '<|im_start|>' + message['role'] + '\n' + message['content'] + '\n<|im_end|>\n' }}{% endfor %}<|im_start|>assistant\n"""
 
 template = Template(CHATML_CHAT_TEMPLATE)
 
 
 def chat_prompt(user, system):
-    prompt = template.render(
-        messages=[
-            {
-                "role": "system",
-                "content": system,
-            },
-            {
-                "role": "user",
-                "content": user,
-            },
-        ],
-        add_generation_prompt=True,
-    )
 
-    return prompt
+    history = memory.get() or []
+
+    messages = [{"role": "system", "content": system}]
+
+    messages.extend(history)
+
+    messages.append({"role": "user", "content": user})
+
+    return template.render(messages=messages)
