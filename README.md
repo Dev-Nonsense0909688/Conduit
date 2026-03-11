@@ -1,4 +1,4 @@
-# Conduit Runtime
+# Conduit Runtime [Fast local LLM runtime]
 
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue?style=for-the-badge\&logo=python)
 ![Status](https://img.shields.io/badge/status-work%20in%20progress-orange?style=for-the-badge)
